@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_shop/service/service_method.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
@@ -60,10 +62,12 @@ class _HomePageState extends State<HomePage> {
               if(snapshot.hasData){
                 var data = json.decode(snapshot.data.toString());
                 List<Map> swiper = (data["data"]["slides"] as List).cast();
+                List<Map> navigatorList = (data["data"]["category"] as List).cast();
+                print("navigatorList:${navigatorList}");
                 return Column(
                   children: <Widget>[
                     SwiperDiy(swiperDataList :swiper),
-
+                    TopNavigator(navigatorList:navigatorList)
                   ],
                 );
               }else{
@@ -77,7 +81,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-
+//轮播组件
 class SwiperDiy extends StatelessWidget {
 
   final List swiperDataList;
@@ -98,6 +102,42 @@ class SwiperDiy extends StatelessWidget {
          pagination: SwiperPagination(),
        ),
 
+    );
+  }
+}
+
+
+//顶部导航分类组件
+class TopNavigator extends StatelessWidget {
+
+  List navigatorList;
+  TopNavigator({this.navigatorList});
+
+  //获取GridView的的ItemUI
+  Widget gridViewItemUI(BuildContext context, item){
+    return InkWell(
+      onTap: (){
+        print("点击了导航分类组件");
+      },
+      child: Column(
+        children: <Widget>[
+          Image.network(item["image"],width: ScreenUtil().setWidth(95), height: ScreenUtil().setHeight(95),),
+          Text(item["mallCategoryName"])
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: ScreenUtil().setHeight(300),
+      child: GridView.count(
+        crossAxisCount: this.navigatorList.length,
+        children: this.navigatorList.map((value){
+          return gridViewItemUI(context, value);
+        }).toList()
+      )
     );
   }
 }
