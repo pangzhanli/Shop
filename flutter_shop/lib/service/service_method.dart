@@ -9,8 +9,8 @@ Future getHomePageContent() async {
   try {
     print("开始获取数据=================");
 
-    // Dio dio = new Dio();
-    Dio dio = getDio();
+    Dio dio = new Dio();
+    // Dio dio = getDio();
     dio.options.contentType = "application/x-www-form-urlencoded";
 
     //如果想以文本(字符串)格式接收响应数据，请使用 `PLAIN`.
