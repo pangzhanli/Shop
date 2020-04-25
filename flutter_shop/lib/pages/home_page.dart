@@ -66,24 +66,41 @@ class _HomePageState extends State<HomePage> {
                     List<Map> swiper = (data["data"]["slides"] as List).cast();
 
                     //分类导航
-                    List<Map> navigatorList = (data["data"]["category"] as List).cast();
+                    List<Map> navigatorList =
+                        (data["data"]["category"] as List).cast();
 
                     //广告
-                    String picture = data["data"]["advertestPicture"]["PICTURE_ADDRESS"];
+                    String picture =
+                        data["data"]["advertestPicture"]["PICTURE_ADDRESS"];
 
                     //店长电话
-                    String leaderImage = data["data"]["shopInfo"]["leaderImage"];
-                    String leaderPhone = data["data"]["shopInfo"]["leaderPhone"];
+                    String leaderImage =
+                        data["data"]["shopInfo"]["leaderImage"];
+                    String leaderPhone =
+                        data["data"]["shopInfo"]["leaderPhone"];
 
-                    print("leaderImage:$leaderImage");
-                    return Column(
-                      children: <Widget>[
-                        SwiperDiy(swiperDataList: swiper),
-                        TopNavigator(navigatorList: navigatorList),
-                        AdBanner(picture: picture),
-                        LeaderPhone(leaderImage: leaderImage, leaderPhone: leaderPhone,)
-                      ],
-                    );
+                    //推荐
+                    List<Map> recommendList =
+                        (data["data"]["recommend"] as List).cast();
+
+                    return SingleChildScrollView(
+                        child: Column(
+                          children: <Widget>[
+                            //导航组件
+                            SwiperDiy(swiperDataList: swiper),
+                            //底部分类组件
+                            TopNavigator(navigatorList: navigatorList),
+                            //广告组件
+                            AdBanner(picture: picture),
+                            //一键拨打店长电话
+                            LeaderPhone(
+                              leaderImage: leaderImage,
+                              leaderPhone: leaderPhone,
+                            ),
+                            //推荐
+                            Recommend(recommendList: recommendList)
+                          ],
+                        ));
                   } else {
                     return Center(
                       child: Text("暂无数据"),
@@ -169,7 +186,6 @@ class AdBanner extends StatelessWidget {
   }
 }
 
-
 //店长电话组件
 class LeaderPhone extends StatelessWidget {
   String leaderImage;
@@ -187,16 +203,97 @@ class LeaderPhone extends StatelessWidget {
     );
   }
 
-  void _launchURL() async{
+  void _launchURL() async {
     //拨打电话
-    String url = "tel:"+this.leaderPhone;
+    String url = "tel:" + this.leaderPhone;
 
     //也可以打开网页
     // String url = "http://pangzhenli.top";
-    if(await canLaunch(url)){
+    if (await canLaunch(url)) {
       await launch(url);
-    }else{
+    } else {
       throw "不能拨打电话";
     }
+  }
+}
+
+//推荐组件
+class Recommend extends StatelessWidget {
+  List<Map> recommendList;
+
+  Recommend({Key key, this.recommendList}) : super(key: key);
+
+  //推荐标题
+  Widget _titleWidget() {
+    return Container(
+      height: ScreenUtil().setHeight(60),
+      alignment: Alignment.centerLeft,
+      padding: EdgeInsets.fromLTRB(10, 2, 10, 5.0),
+      child: Text(
+        "商品推荐", 
+        style: TextStyle(
+          color: Colors.pink
+        ),
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(width: 0.5, color: Colors.black12)),
+      ),
+    );
+  }
+
+  //推荐项
+  Widget _item(index) {
+    return InkWell(
+        onTap: () {},
+        child: Container(
+          width: ScreenUtil().setWidth(250),
+          height: ScreenUtil().setHeight(330),
+          padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+          decoration: BoxDecoration(
+              // color: Colors.blue,
+              border: Border(
+                  right: BorderSide(color: Colors.black12, width: 0.5)
+              ),
+          ),
+          child: Column(
+            children: <Widget>[
+              Image.network(this.recommendList[index]["image"], fit: BoxFit.fill,),
+              SizedBox(height:10),
+              Text("￥${this.recommendList[index]['mallPrice']}"),
+              Text(
+                "￥${this.recommendList[index]["price"]}",
+                style: TextStyle(
+                  color: Colors.black12,
+                  decoration: TextDecoration.lineThrough //中划线
+                ),
+              )
+            ],
+          ),
+        ));
+  }
+
+  //整体listview
+  Widget _recommendList() {
+    return Container(
+        height: ScreenUtil().setHeight(330),
+        child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: this.recommendList.length,
+            itemBuilder: (context, index) {
+              return _item(index);
+            }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+        height: ScreenUtil().setHeight(400),
+        child: Column(
+          children: <Widget>[
+            _titleWidget(),
+            _recommendList(),
+          ],
+        ));
   }
 }
