@@ -26,7 +26,7 @@ class _IndexPageState extends State<IndexPage> {
         icon: Icon(CupertinoIcons.profile_circled), title: Text("用户中心"))
   ];
 
-  final List bodies = [
+  final List<Widget> bodies = [
     HomePage(),
     CategoryPage(),
     CartPage(),
@@ -58,7 +58,11 @@ class _IndexPageState extends State<IndexPage> {
           });
         },
       ),
-      body: this.currentPage,
+      // body: this.currentPage,
+      body: IndexedStack(
+        index: this.currentIndex,
+        children: this.bodies,
+      ),
     );
   }
 }
