@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 //ios风格
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'home_page.dart';
 import 'category_page.dart';
@@ -46,6 +47,10 @@ class _IndexPageState extends State<IndexPage> {
 
   @override
   Widget build(BuildContext context) {
+    //默认 width : 1080px , height:1920px , allowFontScaling:false
+    //目前： 设计稿是按iPhone6的尺寸设计的(iPhone6 750*1334) , 设置字体大小根据系统的“字体大小”辅助选项来进行缩放,默认为false
+    ScreenUtil.init(context, width: 750, height: 1334, allowFontScaling: true);
+
     return Scaffold(
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,

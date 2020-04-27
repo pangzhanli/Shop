@@ -1,11 +1,13 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_easyrefresh/material_footer.dart';
 import 'package:flutter_shop/service/service_method.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 import 'dart:convert';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_easyrefresh/easy_refresh.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({Key key}) : super(key: key);
@@ -23,23 +25,29 @@ class _HomePageState extends State<HomePage>
   int page = 1;
   List<Map> _hotGoodsList = [];
 
+  //上拉加载更多key
+  GlobalKey _footerkey = new GlobalKey(); 
+
+  EasyRefreshController _controller;
+
+  ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
 
-    print("initState........................................................");
+    _controller = EasyRefreshController();
 
-    //获取火爆专区数据
-    this._getHotGoods();
+    print("initState........................................................");
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    //默认 width : 1080px , height:1920px , allowFontScaling:false
-    //目前： 设计稿是按iPhone6的尺寸设计的(iPhone6 750*1334) , 设置字体大小根据系统的“字体大小”辅助选项来进行缩放,默认为false
-    ScreenUtil.init(context, width: 750, height: 1334, allowFontScaling: true);
+    // //默认 width : 1080px , height:1920px , allowFontScaling:false
+    // //目前： 设计稿是按iPhone6的尺寸设计的(iPhone6 750*1334) , 设置字体大小根据系统的“字体大小”辅助选项来进行缩放,默认为false
+    // ScreenUtil.init(context, width: 750, height: 1334, allowFontScaling: true);
 
     // //设备的像素密度
     // print("设备像素密度:${ScreenUtil.pixelRatio}");
@@ -57,6 +65,16 @@ class _HomePageState extends State<HomePage>
     return Scaffold(
         appBar: AppBar(
           title: Text("百姓生活+"),
+          actions: <Widget>[
+            IconButton(
+              icon: Icon(
+                Icons.more_horiz,
+                color: Colors.blue,
+              ), 
+              onPressed: (){
+
+              })
+          ],
         ),
         body: Container(
             color: Colors.white,
@@ -119,62 +137,85 @@ class _HomePageState extends State<HomePage>
                         data["data"]["floor3Pic"]["PICTURE_ADDRESS"];
                     List<Map> floor3 = (data["data"]["floor3"] as List).cast();
 
-                    return SingleChildScrollView(
-                        child: Column(
-                      children: <Widget>[
-                        //导航组件
-                        SwiperDiy(swiperDataList: swiper),
-                        //底部分类组件
-                        TopNavigator(navigatorList: navigatorList),
-                        //广告组件
-                        AdBanner(picture: picture),
-                        //一键拨打店长电话
-                        LeaderPhone(
-                          leaderImage: leaderImage,
-                          leaderPhone: leaderPhone,
-                        ),
-                        //推荐
-                        Recommend(recommendList: recommendList),
+                    return EasyRefresh(
+                        // //质感设置footer
+                        // footer: MaterialFooter(
+                          
+                        // ),
+                        //经典footer
+                        key: _footerkey,
+                        controller: _controller,
+                        footer:  ClassicalFooter(),
+                        // footer: ClassicalFooter(
+                        //   loadReadyText:  "上来加载1",
+                        //   loadingText: "上来加载中......",
+                        //   loadedText: "加载完毕",
+                        //   textColor: Colors.pink,
+                        //   enableInfiniteLoad: true
+                        // ),
+                        onLoad: () async{
+                          var formData = {"page": this.page};
+                          await request("homePageBelowContent", formData).then((value) {
+                            var data = json.decode(value.toString());
+                            List<Map> newGoodsList = (data["data"] as List).cast();
 
-                        //楼层标题1
-                        FloorTitle(
-                          picture_address: floor1Title,
-                        ),
-                        //楼层内容1
-                        FloorContent(floorGoodsList: floor1),
+                            double currScrollPosition = _scrollController.position.maxScrollExtent;
+                            print("当前位置:$currScrollPosition");
+                            setState(() {
+                              this._hotGoodsList.addAll(newGoodsList);
 
-                        //楼层标题2
-                        FloorTitle(
-                          picture_address: floor2Title,
-                        ),
-                        //楼层内容2
-                        FloorContent(floorGoodsList: floor2),
+                              _scrollController.position.jumpTo(currScrollPosition);
+                              // _scrollController.jumpTo(currScrollPosition);
+                            });
+                          });
+                        },
+                        child: ListView(
+                          controller: _scrollController,
+                          children: <Widget>[
+                            //导航组件
+                            SwiperDiy(swiperDataList: swiper),
+                            //底部分类组件
+                            TopNavigator(navigatorList: navigatorList),
+                            //广告组件
+                            AdBanner(picture: picture),
+                            //一键拨打店长电话
+                            LeaderPhone(
+                              leaderImage: leaderImage,
+                              leaderPhone: leaderPhone,
+                            ),
+                            //推荐
+                            Recommend(recommendList: recommendList),
 
-                        //楼层内容3
-                        FloorTitle(picture_address: floor3Title),
-                        //楼层内容3
-                        FloorContent(floorGoodsList: floor3),
+                            //楼层标题1
+                            FloorTitle(
+                              picture_address: floor1Title,
+                            ),
+                            //楼层内容1
+                            FloorContent(floorGoodsList: floor1),
 
-                        //火爆专区
-                        _hotGoods(),
-                      ],
-                    ));
+                            //楼层标题2
+                            FloorTitle(
+                              picture_address: floor2Title,
+                            ),
+                            //楼层内容2
+                            FloorContent(floorGoodsList: floor2),
+
+                            //楼层内容3
+                            FloorTitle(picture_address: floor3Title),
+                            //楼层内容3
+                            FloorContent(floorGoodsList: floor3),
+
+                            //火爆专区
+                            _hotGoods(),
+                          ],
+                        )
+                    );
                   } else {
                     return Center(
                       child: Text("暂无数据"),
                     );
                   }
                 })));
-  }
-
-  //获取火爆专区商品数据
-  void _getHotGoods(){
-    var formData = {"page":this.page};
-    request("homePageBelowContent", formData).then((value){
-      var data = json.decode(value.toString());
-      List<Map> newGoodsList = (data["data"] as List).cast();
-      this._hotGoodsList.addAll(newGoodsList);
-    });
   }
 
   //火爆专区标题，以变量的形式
@@ -184,39 +225,67 @@ class _HomePageState extends State<HomePage>
     margin: EdgeInsets.only(bottom: 5),
     child: Text(
       "火爆专区",
-      style: TextStyle(fontSize: 26),
+      style: TextStyle(
+        fontSize: ScreenUtil().setSp(36),
+      ),
     ),
   );
 
   //商品列表，方法的形式
   Widget _wrapList() {
-    if (this._hotGoodsList.length > 0) {
+    if (this._hotGoodsList != null &&  this._hotGoodsList.length > 0) {
+      print("商品有数据了");
       List<Widget> listWidget = this._hotGoodsList.map((value) {
         return InkWell(
             onTap: () {},
             child: Container(
               width: ScreenUtil().setWidth(370),
+              padding: EdgeInsets.all(5.0),
+              margin: EdgeInsets.only(bottom: 3.0),
               child: Column(
                 children: <Widget>[
-                  Image.network(value["image"]),
-                  Text("¥${value["mallPrice"]}"),
-                  Text("¥${value["price"]}")
+                  Image.network(
+                    value["image"],
+                    width: ScreenUtil().setWidth(370),
+                  ),
+                  Text(
+                    "${value["name"]}",
+                    maxLines: 1,
+                    //超出范围以省略号结尾
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        color: Colors.pink, fontSize: ScreenUtil().setSp(26)),
+                  ),
+                  Row(
+                    children: <Widget>[
+                      Text(
+                        "¥${value["mallPrice"]}",
+                        style: TextStyle(fontSize: ScreenUtil().setSp(26)),
+                      ),
+                      SizedBox(width: 10),
+                      Text(
+                        "¥${value["price"]}",
+                        style: TextStyle(
+                            color: Colors.black26,
+                            //中划线
+                            decoration: TextDecoration.lineThrough,
+                            fontSize: ScreenUtil().setSp(26)),
+                      )
+                    ],
+                  ),
                 ],
               ),
             ));
       }).toList();
 
-      return Wrap(
-        spacing: 2,
-        children: listWidget
-      );
-    }else{
-      Text("");
+      return Wrap(spacing: 2, children: listWidget);
+    } else {
+      return Text("暂无数据........................");
     }
   }
 
   //火爆专区，整体组件
-  Widget _hotGoods(){
+  Widget _hotGoods() {
     return Container(
       child: Column(
         children: <Widget>[
@@ -226,7 +295,6 @@ class _HomePageState extends State<HomePage>
       ),
     );
   }
-
 }
 
 //轮播组件
@@ -276,9 +344,10 @@ class TopNavigator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        height: ScreenUtil().setHeight(300),
+        height: ScreenUtil().setHeight(330),
         padding: EdgeInsets.all(10),
         child: GridView.count(
+            physics: NeverScrollableScrollPhysics(),
             crossAxisCount: 5,
             children: this.navigatorList.map((value) {
               return gridViewItemUI(context, value);
