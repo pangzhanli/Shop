@@ -82,7 +82,7 @@ class _HomePageState extends State<HomePage>
             // height: 330,
             child: FutureBuilder(
                 // future: getHomePageContent(), // 用户定义的需要异步执行的代码，类型为Future<String>或者null的变量或函数
-                future: request("homePageContent", formData),
+                future: request("homePageContent", formData:formData),
                 builder: (context, snapshot) {
                   //snapshot就是_calculation在时间轴上执行过程的状态快照
                   switch (snapshot.connectionState) {
@@ -95,7 +95,8 @@ class _HomePageState extends State<HomePage>
                         return new Text('Error: ${snapshot.error}');
                       } else {
                         // return new Text('Result: ${snapshot.data}');
-                        print("已经获取到数据:${snapshot.data}");
+                        print("获取首页数据成功");
+                        // print("已经获取到数据:${snapshot.data}");
                       }
                   }
                   if (snapshot.hasData) {
@@ -155,7 +156,7 @@ class _HomePageState extends State<HomePage>
                         // ),
                         onLoad: () async{
                           var formData = {"page": this.page};
-                          await request("homePageBelowContent", formData).then((value) {
+                          await request("homePageBelowContent", formData:formData).then((value) {
                             var data = json.decode(value.toString());
                             List<Map> newGoodsList = (data["data"] as List).cast();
 
